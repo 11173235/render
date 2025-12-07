@@ -10,6 +10,7 @@ charImages = {
 @app.route("/", methods=["POST"])
 def webhook():
     data = request.get_json()
+    print(data)
     character = data["queryResult"]["parameters"].get("GenshinCharacter")  # 從你的聊天機器人接收角色名
     image_url = charImages.get(character, "")
     return jsonify({"message": f"{character} 的培養攻略", "image_url": image_url})
