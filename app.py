@@ -13,7 +13,12 @@ def webhook():
     print(data)
     character = data["queryResult"]["parameters"].get("GenshinCharacter")  # 從你的聊天機器人接收角色名
     image_url = charImages.get(character, "")
-    return jsonify({"message": f"{character} 的培養攻略", "image_url": image_url})
+    if character in charImages:
+        image_url = charImages[character]
+        text_reply = f"{character} 的培養攻略"
+    return jsonify({
+        "fulfillmentText": text_reply,
+        "fulfillmentMessages": [{"text": {"text": [text_reply]}},{"image": {"imageurl": image_url}}]})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
