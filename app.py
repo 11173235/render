@@ -8,7 +8,7 @@ line_bot_api = LineBotApi('anVtJcf0vZHWkiEt0A6Dbmu7/pd4d8vyDFoTlMSYkGDJTN2BBKR1U
 parser = WebhookParser('2d309aac1dc97f255aad5d939ba1baa6')
 
 # 記錄使用者流程模式
-user_context = {}   # {user_id: "guide"}
+user_context = {}
 
 # 角色圖片字典（之後你直接在這裡加資料）
 CHARACTER_IMAGES = {
