@@ -10,7 +10,7 @@ parser = WebhookParser('2d309aac1dc97f255aad5d939ba1baa6')
 # 記錄使用者流程模式
 user_context = {}
 
-# 角色圖片字典（之後你直接在這裡加資料）
+# 角色圖片字典
 CHARACTER_IMAGES = {
     # ---- 原神 ----
     "杜林": "https://upload-os-bbs.hoyolab.com/upload/2025/12/03/248396204/0f4481279430a17e7df8546973f1bf45_1737055575909256174.jpg",
