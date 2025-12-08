@@ -1,49 +1,68 @@
 from flask import Flask, request, jsonify
+from linebot import LineBotApi
+from linebot.models import ImageSendMessage, TextSendMessage
 import requests
 
 app = Flask(__name__)
 
-LINE_TOKEN = "你的 LINE Channel Access Token"
+LINE_CHANNEL_ACCESS_TOKEN = "你的ChannelAccessToken"
+LINE_CHANNEL_SECRET = "你的ChannelSecret"
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-charImages = {
-    "奈芙爾": "https://upload-os-bbs.hoyolab.com/upload/2025/10/22/248396204/03efcd616004083b56f1236291a8168c_1765848458562635549.jpg",
-    "菲林斯": "https://upload-os-bbs.hoyolab.com/upload/2025/09/29/248396204/86565129968b752c57f54294a09f2274_8369161948052686452.jpg",
-}
+# 簡單 session context 記錄使用者模式
+user_context = {}
 
-@app.route("/", methods=["POST"])
+@app.route("/webhook", methods=['POST'])
 def webhook():
-    data = request.get_json()
-    print("Received from LINE:", data)
+    req = request.get_json()
+    event = req.get("originalDetectIntentRequest", {}).get("payload", {})
+    reply_token = event.get("replyToken")
+    user_id = event.get("source", {}).get("userId")
 
-    events = data.get("events", [])
-    for event in events:
-        reply_token = event["replyToken"]
-        user_message = event["message"]["text"]
-        image_url = charImages.get(user_message, "")
-        text_reply = f"{user_message} 的培養攻略" if image_url else "找不到這個角色"
+    # 1️⃣ 處理 Rich Menu Postback，進入「角色培養攻略模式」
+    if event.get("type") == "postback":
+        data = event["postback"]["data"]  # e.g., "mode=character_build"
+        if "character_build" in data:
+            user_context[user_id] = "character_build"
+            line_bot_api.reply_message(
+                reply_token,
+                TextSendMessage(text="已切換到角色培養攻略模式，請輸入角色名字。"))
+            return jsonify({}), 200
 
-        payload = {
-            "replyToken": reply_token,
-            "messages": [
-                {"type": "text", "text": text_reply},
-            ]
-        }
+    # 2️⃣ 處理文字訊息
+    elif event.get("type") == "message" and event["message"]["type"] == "text":
+        user_text = event["message"]["text"].lower()
 
-        if image_url:
-            payload["messages"].append({
-                "type": "image",
-                "originalContentUrl": image_url,
-                "previewImageUrl": image_url
-            })
+        # 只在角色培養攻略模式才處理名字查詢
+        if user_context.get(user_id) == "character_build":
+            # 從 Dialogflow 取得三個 entity
+            params = req["queryResult"]["parameters"]
+            genshin_name = params.get("genshincharacter")
+            starrail_name = params.get("starrailcharacter")
+            zzz_name = params.get("zzzcharacter")
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_TOKEN}"
-        }
+            # 依序取第一個有值的角色名字
+            character_name = genshin_name or starrail_name or zzz_name
 
-        requests.post("https://api.line.me/v2/bot/message/reply", headers=headers, json=payload)
+            if character_name:
+                # 假設 Render API 可以回傳培養攻略圖片 URL
+                img_url = f"https://render-server.com/build/{character_name}.png"
+                line_bot_api.reply_message(
+                    reply_token,
+                    ImageSendMessage(original_content_url=img_url,
+                                     preview_image_url=img_url))
+            else:
+                # 三個 entity 都沒找到
+                line_bot_api.reply_message(
+                    reply_token,
+                    TextSendMessage(text="找不到角色，請確認名字或使用中文/英文別名。"))
+        else:
+            # 非角色培養攻略模式，可給一般回覆
+            line_bot_api.reply_message(
+                reply_token,
+                TextSendMessage(text="請先從選單選擇要查詢的模式。"))
 
-    return "OK"
+    return jsonify({}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(port=5000)
