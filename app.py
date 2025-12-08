@@ -146,4 +146,4 @@ def handle_message(event):
         ImageSendMessage(
             original_content_url=img_url,
             preview_image_url=img_url))
-return 'OK'
+    return 'OK'
