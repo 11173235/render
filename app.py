@@ -14,17 +14,18 @@ dialogflow_project_ID = "gameguide-w9ep"
 
 def generate_access_token():
     credentials = service_account.Credentials.from_service_account_file(
-        "service-account.json",
+        "gameguide-w9ep-27bc7ec71e52.json",
         scopes=["https://www.googleapis.com/auth/cloud-platform"])
     request = google.auth.transport.requests.Request()
     credentials.refresh(request)
     return credentials.token
 
-def call_dialogflow(text):
-    url = f"https://dialogflow.googleapis.com/v2/projects/{dialogflow_project_ID}/agent/sessions/line_bot_session:detectIntent"
+def call_dialogflow(user_id, text):
+    session_id = user_id  # 使用 LINE user_id 當 session
+    url = f"https://dialogflow.googleapis.com/v2/projects/{dialogflow_project_ID}/agent/sessions/{session_id}:detectIntent"
     access_token = generate_access_token()
     headers = {
-        "Authorization": "Bearer {access_token}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"}
     payload = {
         "query_input": {
@@ -42,15 +43,6 @@ def call_dialogflow(text):
         pass
 
     return {"entities": entities}
-
-def match_character(user_input):
-    result = call_dialogflow(user_input)
-    entities = result.get("entities", {})
-
-    for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
-        if e in entities and entities[e]:
-            return entities[e]
-    return None
 
 # 記錄使用者流程模式
 user_context = {}
@@ -100,8 +92,8 @@ CHARACTER_IMAGES = {
     "「扳機」": "https://upload-os-bbs.hoyolab.com/upload/2025/03/31/370699309/e4288113f121760254acc55dec278244_7842277090726115056.png",}
 
 # Dialogflow entity 比對
-def match_character(user_input):
-    result = call_dialogflow(user_input)
+def match_character(user_id, text):
+    result = call_dialogflow(user_id, text)
     entities = result.get("entities", {})
 
     # 找到第一個命中的角色名稱（使用 entity 的標準值）
@@ -122,7 +114,7 @@ def callback():
     
     for event in events:
         if isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
-            handle_text_message(event)
+            handle_message(event)
     return 'OK'
 
 def handle_message(event):
@@ -139,7 +131,7 @@ def handle_message(event):
 
     # ② 使用者輸入角色名
     if user_id in user_context and user_context[user_id] == "characterguide":
-        character = match_character(text)
+        character = match_character(user_id, text)
         if character is None:
             line_bot_api.reply_message(
                 event.reply_token,
