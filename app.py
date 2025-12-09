@@ -80,20 +80,14 @@ def dialogflow_webhook():
         user_context[user_id] = "characterguide"
         return jsonify({
             "fulfillmentText": "請輸入你想查詢的角色名稱"})
+        
     if user_context.get(user_id) == "characterguide":
         params = body.get("queryResult", {}).get("parameters", {})
-        # 把所有 entity 都回傳給使用者
         messages = []
         for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
             if e in params and params[e]:
                 value = params[e]
-                # 確保回傳的是字串（如果是 list 就取第一個元素）
-                value_str = value[0] if isinstance(value, list) else value
-                messages.append(f"Entity: {e}, Value: {value_str}")
-        if messages:
-            return jsonify({"fulfillmentText": "\n".join(messages)})
-        else:
-            return jsonify({"fulfillmentText": "沒有找到任何 entity"})
+                messages.append(f"Value: {value}")
 
     # ② 使用者正在角色查詢模式
     if user_context.get(user_id) == "characterguid":
