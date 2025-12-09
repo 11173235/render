@@ -80,17 +80,9 @@ def dialogflow_webhook():
         user_context[user_id] = "characterguide"
         return jsonify({
             "fulfillmentText": "請輸入你想查詢的角色名稱"})
-        
-    if user_context.get(user_id) == "characterguide":
-        params = body.get("queryResult", {}).get("parameters", {})
-        messages = []
-        for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
-            if e in params and params[e]:
-                value = params[e]
-                messages.append(f"Value: {value}")
 
     # ② 使用者正在角色查詢模式
-    if user_context.get(user_id) == "characterguid":
+    if user_context.get(user_id) == "characterguide":
         character = match_character_from_webhook(body)
         if not character:
             return jsonify({"fulfillmentText": "查無此角色，請重新輸入角色名稱"})
