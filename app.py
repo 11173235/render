@@ -109,8 +109,12 @@ def match_character(user_id, text):
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
+    print("Webhook body:", body)
+    print("Signature:", signature)
+
     try:
         events = parser.parse(body, signature)
+        print("Parsed events:", events)
     except:
         return 'OK'
     for event in events:
@@ -123,6 +127,8 @@ def handle_message(event):
     text = event.message.text.strip()
 
     # ① Rich Menu 文字觸發角色培養攻略流程 ---
+    is_char_guide = (text == "角色培養攻略")
+    print("是否進入角色培養攻略模式:", is_char_guide)
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
         line_bot_api.reply_message(
