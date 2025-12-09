@@ -86,21 +86,68 @@ def match_character_from_webhook(body):
 # FLEX版本選單
 def flex_choose_version():
     flex = {
-        "type": "flex","altText": "請選擇遊戲版本活動更新資訊",
-        "contents": {"type": "bubble","size": "mega",
-            "header": {"type": "box","layout": "vertical",
-                "contents": [{"type": "text","text": "活動更新資訊","weight": "bold","size": "xl","color": "#ffffff"}],
-                "backgroundColor": "#5A8DEE","paddingAll": "20px"},
-            "body": {"type": "box","layout": "vertical","spacing": "12px",
-                "contents": [
-                    {"type": "button","style": "secondary","color": "#F2F2F2",
-                        "action": {"type": "message","label": "原神 月之三","text": "原神 月之三"}},
-                    {"type": "button","style": "secondary","color": "#F2F2F2",
-                        "action": {"type": "message","label": "崩壞：星穹鐵道 3.7","text": "崩壞：星穹鐵道 3.7"}},
-                    {"type": "button","style": "secondary","color": "#F2F2F2",
-                        "action": {"type": "message","label": "崩壞：星穹鐵道 3.8","text": "崩壞：星穹鐵道 3.8"}},
-                    {"type": "button","style": "secondary","color": "#F2F2F2",
-                        "action": {"type": "message","label": "絕區零 2.4","text": "絕區零 2.4"}}]}}}
+  "type": "bubble",
+  "size": "mega",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "活動更新資訊",
+        "size": "xl",
+        "weight": "bold",
+        "color": "#ffffff"
+      }
+    ],
+    "backgroundColor": "#000000",
+    "paddingAll": "xl"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "action": {
+          "type": "message",
+          "label": "原神 月之三",
+          "text": "原神 月之三"
+        },
+        "style": "secondary",
+        "color": "#F2F2F2"
+      },
+      {
+        "type": "button",
+        "action": {
+          "type": "message",
+          "label": "崩壞：星穹鐵道 3.7",
+          "text": "崩壞：星穹鐵道 3.7"
+        },
+        "style": "secondary",
+        "color": "#F2F2F2"
+      },
+      {
+        "type": "button",
+        "action": {
+          "type": "message",
+          "label": "崩壞：星穹鐵道 3.8",
+          "text": "崩壞：星穹鐵道 3.8"
+        },
+        "style": "secondary",
+        "color": "#F2F2F2"
+      },
+      {
+        "type": "button",
+        "action": {
+          "type": "message",
+          "label": "絕區零 2.4",
+          "text": "絕區零 2.4"
+        },
+        "style": "secondary",
+        "color": "#F2F2F2"
+      }
+    ],"spacing": "lg"}}
     return flex
 
 # Dialogflow fulfillment webhook 主程式
