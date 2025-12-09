@@ -116,8 +116,7 @@ def dialogflow_webhook():
     # 進入角色攻略模式
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
-        return jsonify({
-            "fulfillmentText": "請輸入你想查詢的角色名稱"})
+        return jsonify({"fulfillmentText": "請輸入你想查詢的角色名稱"})
 
     # 使用者正在角色查詢模式
     if user_context.get(user_id) == "characterguide":
@@ -135,7 +134,9 @@ def dialogflow_webhook():
     
     # 活動更新資訊模式
     if text == "活動更新資訊":
-        return flex_choose_version()
+        user_context[user_id] = "eventupdates"
+        return jsonify({"fulfillmentText": "選擇遊戲和版本"})
+        #return flex_choose_version()
 
         # 活動更新資訊選單 → 判斷版本文字
         if text in ACTIVITY_DATA:
