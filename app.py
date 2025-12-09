@@ -135,7 +135,7 @@ def dialogflow_webhook():
     
     # 活動更新資訊模式
     if text == "活動更新資訊":
-    return flex_choose_version()
+        return flex_choose_version()
 
         # 活動更新資訊選單 → 判斷版本文字
         if text in ACTIVITY_DATA:
