@@ -83,20 +83,17 @@ def dialogflow_webhook():
     # ② 使用者正在角色查詢模式
     if user_context.get(user_id) == "characterguide":
         character = match_character_from_webhook(body)
-
         if not character:
-            user_context.pop(user_id, None)
-            return jsonify({"fulfillmentText": "找不到這個角色，請確認名字是否正確！"})
+            return jsonify({"fulfillmentText": "查無此角色，請重新輸入角色名稱"})
 
         img_url = CHARACTER_IMAGES.get(character)
         user_context.pop(user_id, None)
-
         if img_url:
             # 傳回圖片
             return jsonify({
-                "fulfillmentMessages": [{
-                        "image": {
-                            "imageUri": img_url}}]})
+                "fulfillmentMessages": [
+                    {"text": {"text": [f"{character} 的培養攻略："]}},
+                    {"image": {"imageUri": img_url}}]})
 
     # 非角色查詢情境 → 預設回覆
     return jsonify({"fulfillmentText": f"收到：{text}"})
