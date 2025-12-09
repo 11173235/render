@@ -61,6 +61,16 @@ def match_character_from_webhook(body):
     params = body["queryResult"].get("parameters", {})
     print(params[0])
     for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
+        
+        value = params.get(e)
+        if value:
+            if isinstance(value, list):
+                print("params[e] 是 list")
+            elif isinstance(value, str):
+                print("params[e] 是 str")
+            else:
+                print(f"params[e] 是其他型別: {type(value)}")
+
         if params.get(e):
             return params[e]
     return None
