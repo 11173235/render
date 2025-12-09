@@ -56,6 +56,25 @@ CHARACTER_IMAGES = {
     "「席德」": "https://upload-os-bbs.hoyolab.com/upload/2025/09/02/370699309/29e9eb5ba9edeeaccb1fe88c943830bc_4293272389443311205.jpg",
     "「扳機」": "https://upload-os-bbs.hoyolab.com/upload/2025/03/31/370699309/e4288113f121760254acc55dec278244_7842277090726115056.png",}
 
+# 遊戲版本日曆圖/文
+ACTIVITY_DATA = {
+    "原神 月之二": {"type": "image","url": "https://fastcdn.hoyoverse.com/mi18n/hk4e_global/m20251110hy2ebg1fy8/upload/c5864ab82c466958c72ec56529a63ffe_5873909476729017748.jpg"},
+    "崩壞：星穹鐵道 3.7": {"type": "image","url": "https://upload-os-bbs.hoyolab.com/upload/2025/11/04/248389732/0850ec1660cf3cb49ab4702b22af30cc_4548357368892651293.jpg"},
+    "崩壞：星穹鐵道 3.8": {"type": "image","url": "https://upload-os-bbs.hoyolab.com/upload/2025/12/07/248389732/23fc10410ba0bc077d367a8542fb9a30_4745388983360381307.jpg"},
+    "絕區零 2.4": {"type": "text",
+        "events": [
+            {"name": "第一期調頻:琉音/雨果", "time": "11/26 - 12/17"},
+            {"name": "第二期調頻:般岳/艾蓮", "time": "12/17 - 12/29"},
+            {"name": "全新放送", "time": "11/26 - 12/29"},
+            {"name": "「嗯呢」從天降", "time": "12/17 - 12/29"},
+            {"name": "「嗯呢」棋俠傳", "time": "11/26 - 12/29"},
+            {"name": "新黃金魔神戰士", "time": "11/28 - 12/29"},
+            {"name": "流光札記", "time": "12/3 - 12/29"},
+            {"name": "擬境序列對決", "time": "12/8 - 12/29"},
+            {"name": "兔子小姐百分百", "time": "12/16 - 12/29"},
+            {"name": "先遣賞金-區域巡防", "time": "12/11 - 12/16"},
+            {"name": "資料懸賞-實戰模擬", "time": "尚未公布"}]}}
+
 # 從 webhook 判斷角色名稱
 def match_character_from_webhook(body):
     params = body["queryResult"].get("parameters", {})
@@ -63,6 +82,26 @@ def match_character_from_webhook(body):
         if params.get(e):
             return params[e]
     return None
+
+# FLEX版本選單
+def flex_choose_version():
+    flex = {
+        "type": "flex","altText": "請選擇遊戲版本活動更新資訊",
+        "contents": {"type": "bubble","size": "mega",
+            "header": {"type": "box","layout": "vertical",
+                "contents": [{"type": "text","text": "活動更新資訊","weight": "bold","size": "xl","color": "#ffffff"}],
+                "backgroundColor": "#5A8DEE","paddingAll": "20px"},
+            "body": {"type": "box","layout": "vertical","spacing": "12px",
+                "contents": [
+                    {"type": "button","style": "secondary","color": "#F2F2F2",
+                        "action": {"type": "message","label": "原神 月之三","text": "原神 月之三"}},
+                    {"type": "button","style": "secondary","color": "#F2F2F2",
+                        "action": {"type": "message","label": "崩壞：星穹鐵道 3.7","text": "崩壞：星穹鐵道 3.7"}},
+                    {"type": "button","style": "secondary","color": "#F2F2F2",
+                        "action": {"type": "message","label": "崩壞：星穹鐵道 3.8","text": "崩壞：星穹鐵道 3.8"}},
+                    {"type": "button","style": "secondary","color": "#F2F2F2",
+                        "action": {"type": "message","label": "絕區零 2.4","text": "絕區零 2.4"}}]}}}
+    return flex
 
 # Dialogflow fulfillment webhook 主程式
 @app.route("/callback", methods=["POST"])
@@ -74,13 +113,13 @@ def dialogflow_webhook():
     session = body.get("session", "")
     user_id = session.split("/")[-1]
 
-    # ① 進入角色攻略模式
+    # 進入角色攻略模式
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
         return jsonify({
             "fulfillmentText": "請輸入你想查詢的角色名稱"})
 
-    # ② 使用者正在角色查詢模式
+    # 使用者正在角色查詢模式
     if user_context.get(user_id) == "characterguide":
         character = match_character_from_webhook(body)
         if not character:
@@ -93,8 +132,33 @@ def dialogflow_webhook():
                 "fulfillmentMessages": [
                     {"text": {"text": [f"{character} 的培養攻略："]}},
                     {"image": {"imageUri": img_url}}]})
+    
+    # 活動更新資訊模式
+    if text == "活動更新資訊":
+    return flex_choose_version()
 
-    # 非角色查詢情境 → 預設回覆
+        # 活動更新資訊選單 → 判斷版本文字
+        if text in ACTIVITY_DATA:
+            data = ACTIVITY_DATA[text]
+    
+            # 有活動日曆圖（原神/崩鐵）
+            if data["type"] == "image":
+                return jsonify({
+                    "fulfillmentMessages": [
+                        {"text": {"text": [f"{text} 活動日曆："]}},
+                        {"image": {"imageUri": data["url"]}}]})
+    
+            # 純文字活動資訊（絕區零）
+            elif data["type"] == "text":
+                event_lines = [f"{e['name']}（{e['time']}）" for e in data["events"]]
+                final_text = text + " 已公開活動：\n" + "\n".join(event_lines)
+    
+                return jsonify({
+                    "fulfillmentMessages": [
+                        {"text": {"text": [final_text]}}]})
+
+
+    # 預設回覆
     return jsonify({"fulfillmentText": f"收到：{text}"})
 
 # 啟動 server
