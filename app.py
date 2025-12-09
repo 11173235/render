@@ -75,30 +75,28 @@ def dialogflow_webhook():
     session = body.get("session", "")
     user_id = session.split("/")[-1]
 
-    params = body.get("queryResult", {}).get("parameters", {})
-
-    # 把所有 entity 都回傳給使用者
-    messages = []
-    for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
-        if e in params and params[e]:
-            value = params[e]
-            # 確保回傳的是字串（如果是 list 就取第一個元素）
-            value_str = value[0] if isinstance(value, list) else value
-            messages.append(f"Entity: {e}, Value: {value_str}")
-
-    if messages:
-        return jsonify({"fulfillmentText": "\n".join(messages)})
-    else:
-        return jsonify({"fulfillmentText": "沒有找到任何 entity"})
-
     # ① 進入角色攻略模式
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
         return jsonify({
             "fulfillmentText": "請輸入你想查詢的角色名稱"})
+    if user_context.get(user_id) == "characterguide":
+        params = body.get("queryResult", {}).get("parameters", {})
+        # 把所有 entity 都回傳給使用者
+        messages = []
+        for e in ["genshincharacter", "starrailcharacter", "zzzcharacter"]:
+            if e in params and params[e]:
+                value = params[e]
+                # 確保回傳的是字串（如果是 list 就取第一個元素）
+                value_str = value[0] if isinstance(value, list) else value
+                messages.append(f"Entity: {e}, Value: {value_str}")
+        if messages:
+            return jsonify({"fulfillmentText": "\n".join(messages)})
+        else:
+            return jsonify({"fulfillmentText": "沒有找到任何 entity"})
 
     # ② 使用者正在角色查詢模式
-    if user_context.get(user_id) == "characterguide":
+    if user_context.get(user_id) == "characterguid":
         character = match_character_from_webhook(body)
         if not character:
             return jsonify({"fulfillmentText": "查無此角色，請重新輸入角色名稱"})
