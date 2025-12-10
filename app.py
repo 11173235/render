@@ -137,8 +137,7 @@ def dialogflow_webhook():
     if user_context.get(user_id) == "characterguide":
         character = match_character_from_webhook(body)
         if not character:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此角色，請重新輸入角色名稱\n目前支援角色如下：\n" + get_character_list_text()]}}
-    ]}}]})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此角色，請重新輸入角色名稱\n目前支援角色如下：\n" + get_character_list_text()]}}]})
 
         img_url = CHARACTER_IMAGES.get(character)
         if img_url:
