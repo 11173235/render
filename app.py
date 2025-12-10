@@ -141,13 +141,13 @@ def dialogflow_webhook():
     if user_context.get(user_id) == "eventinformation":
         params = body["queryResult"].get("parameters", {})
         # 取得使用者輸入
-        user_version = params.get("version")  # 版本號
+        user_version = str(params.get("version"))  # 版本號
         user_game = params.get("game")        # 遊戲（可能為 None）
         
         # 查找遊戲版本
         user_game, data = find_game_and_version(user_game, user_version)
         if data is None:
-            return "查無此版本資訊，請確認遊戲名稱或版本號是否正確。"
+            return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此版本資訊，請確認遊戲名稱或版本號是否正確。"]}}]})
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
