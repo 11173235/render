@@ -86,6 +86,23 @@ def match_character_from_webhook(body):
             return params[e]
     return None
 
+#判斷遊戲名稱+獲取版本資料
+def find_game_and_version(game, version):
+    # 如果使用者有輸入遊戲名稱 → 直接查指定遊戲，不會誤判
+    if game:
+        for key in ["current", "next"]:
+            data = ACTIVITY_DATA.get(game, {}).get(key)
+            if data and version == data.get("version"):
+                return game, data
+        return None, None
+    # ---- 沒有提供遊戲名稱時的 fallback ----
+    for g, version_data in ACTIVITY_DATA.items():
+        for key in ["current", "next"]:
+            data = version_data.get(key)
+            if data and version == data.get("version"):
+                return g, data
+    return None, None
+
 # Dialogflow fulfillment webhook 主程式
 @app.route("/callback", methods=["POST"])
 def dialogflow_webhook():
@@ -127,28 +144,10 @@ def dialogflow_webhook():
         user_version = params.get("version")  # 版本號
         user_game = params.get("game")        # 遊戲（可能為 None）
         
-        # 判斷遊戲
-        if not user_game:
-            for game, versions in ACTIVITY_DATA.items():
-                # 判斷 current
-                if "current" in versions and user_version == versions["current"].get("version"):
-                    user_game = game
-                    break
-                # 判斷 next
-                elif "next" in versions and versions["next"] and user_version == versions["next"].get("version"):
-                    user_game = game
-                    break
-        # 若找不到符合的遊戲
-        if not user_game:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"找不到 {user_version} 對應的遊戲"]}}]})
-        
-        # 判斷版本
-        if user_version == ACTIVITY_DATA[user_game]["current"].get("version"):
-            data = ACTIVITY_DATA[user_game]["current"]
-        elif user_version == ACTIVITY_DATA[user_game]["next"].get("version"):
-            data = ACTIVITY_DATA[user_game]["next"]
-        else:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"沒有{user_game}{user_version} 版本活動資訊"]}}]})
+        # 查找遊戲版本
+        user_game, data = find_game_and_version(user_game, user_version)
+        if data is None:
+            return "查無此版本資訊，請確認遊戲名稱或版本號是否正確。"
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
