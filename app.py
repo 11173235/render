@@ -58,9 +58,9 @@ CHARACTER_IMAGES = {
 
 ACTIVITY_DATA = {
     "原神": {
-        "current": {"version": "6.2", "img": "https://fastcdn.hoyoverse.com/mi18n/hk4e_global/m20251110hy2ebg1fy8/upload/c5864ab82c466958c72ec56529a63ffe_5873909476729017748.jpg"},
+        "current": {"version": "月之三", "img": "https://fastcdn.hoyoverse.com/mi18n/hk4e_global/m20251110hy2ebg1fy8/upload/c5864ab82c466958c72ec56529a63ffe_5873909476729017748.jpg"},
         "next": None},
-    "崩鐵": {
+    "崩壞：星穹鐵道": {
         "current": {"version": "3.7", "img": "https://upload-os-bbs.hoyolab.com/upload/2025/11/04/248389732/0850ec1660cf3cb49ab4702b22af30cc_4548357368892651293.jpg"},
         "next": {"version": "3.8", "img": "https://upload-os-bbs.hoyolab.com/upload/2025/12/07/248389732/23fc10410ba0bc077d367a8542fb9a30_4745388983360381307.jpg"}},
     "絕區零": {
@@ -99,13 +99,13 @@ def dialogflow_webhook():
     # 進入角色攻略模式
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
-        return jsonify({"fulfillmentText": "請輸入你想查詢的角色名稱"})
+        return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的角色名稱"]}}]})
 
     # 使用者正在角色查詢模式
     if user_context.get(user_id) == "characterguide":
         character = match_character_from_webhook(body)
         if not character:
-            return jsonify({"fulfillmentText": "查無此角色，請重新輸入角色名稱"})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此角色，請重新輸入角色名稱"]}}]})
 
         img_url = CHARACTER_IMAGES.get(character)
         if img_url:
@@ -118,14 +118,11 @@ def dialogflow_webhook():
     # 版本活動資訊模式
     if text == "版本活動資訊":
         user_context[user_id] = "eventupdates"
-        return jsonify({"fulfillmentText": "請輸入你想查詢的遊戲版本"})
+        return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲版本"]}}]})
         
     # 使用者已進入版本活動資訊模式
     if user_context.get(user_id) == "eventupdates":
-        # 判斷版本文字
-        body = request.get_json(force=True)
         params = body["queryResult"].get("parameters", {})
-        
         # 取得使用者輸入
         user_version = params.get("version")  # 版本號
         user_game = params.get("game")        # 遊戲（可能為 None）
@@ -143,7 +140,7 @@ def dialogflow_webhook():
                     break
         # 若找不到符合的遊戲
         if not user_game:
-            return jsonify({"fulfillmentText": f"找不到 {user_version} 對應的遊戲"})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"找不到 {user_version} 對應的遊戲"]}}]})
         
         # 判斷版本
         if user_version == ACTIVITY_DATA[user_game]["current"]["version"]:
@@ -151,7 +148,7 @@ def dialogflow_webhook():
         elif user_version == ACTIVITY_DATA[user_game]["next"]["version"]:
             data = ACTIVITY_DATA[user_game]["next"]
         else:
-            return jsonify({"fulfillmentText": f"{user_game} 沒有 {user_version} 版本活動資訊"})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} 沒有 {user_version} 版本活動資訊"]}}]})
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
@@ -163,10 +160,10 @@ def dialogflow_webhook():
             activity_text = "\n".join([f"{a['name']} ({a['time']})" for a in data["events"]])
             return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} {user_version} 版本活動資訊如下：\n{activity_text}"]}}]})
         else:
-            return jsonify({"fulfillmentText": f"{user_game} {user_version} 版本活動資訊尚未公布"})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} {user_version} 版本活動資訊尚未公布"]}}]})
 
     # 預設回覆
-    return jsonify({"fulfillmentText": f"收到：{text}"})
+    return jsonify({"fulfillmentMessages": [{"text": {"text": [f"收到：{text}"]}}]})
 
 # 啟動 server
 port = int(os.environ.get("PORT", 5000))
