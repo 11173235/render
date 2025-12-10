@@ -115,12 +115,12 @@ def dialogflow_webhook():
                     {"text": {"text": [f"{character} 的培養攻略："]}},
                     {"image": {"imageUri": img_url}}]})
     
-    # 活動更新資訊模式
-    if text == "活動更新資訊":
+    # 版本活動資訊模式
+    if text == "版本活動資訊":
         user_context[user_id] = "eventupdates"
         return jsonify({"fulfillmentText": "請輸入你想查詢的遊戲版本"})
         
-    # 使用者已進入活動更新資訊模式
+    # 使用者已進入版本活動資訊模式
     if user_context.get(user_id) == "eventupdates":
         # 判斷版本文字
         body = request.get_json(force=True)
