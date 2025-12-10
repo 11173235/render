@@ -175,11 +175,14 @@ def get_dungeon_link(game, dungeon):
     return None, None
 
 # 清理變數
-def clear(user_game,user_version):
+def clear(user_game,user_version,user_dungeon):
     game= user_game
     version= user_version
+    dungeon= user_dungeon
     user_context[user_id].pop("game", None)
-    user_context[user_id].pop("version", None)
+    user_context[user_id].pop("gameversion", None)
+    user_context[user_id].pop("dungeon", None)
+    return game,version,dungeon
 
 # Dialogflow fulfillment webhook 主程式
 @app.route("/callback", methods=["POST"])
@@ -243,18 +246,18 @@ def dialogflow_webhook():
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
-            clear(user_game,user_version)
+            g,v,d = clear(user_game,user_version,None)
             return jsonify({
                 "fulfillmentMessages": [
-                    {"text": {"text": [f"{user_game}{user_version}版本活動資訊如下："]}},
+                    {"text": {"text": [f"{g}{v}版本活動資訊如下："]}},
                     {"image": {"imageUri": data["img"]}}]})
         elif user_game == "絕區零" and "events" in data:
             activity_text = "\n".join([f"{a['name']} ({a['time']})" for a in data["events"]])
-            clear(user_game,user_version)
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game}{user_version}版本活動資訊如下：\n{activity_text}"]}}]})
+            g,v,d = clear(user_game,user_version,None)
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{g}{v}版本活動資訊如下：\n{activity_text}"]}}]})
         else:
-            clear(user_game,user_version)
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game}{user_version}版本活動資訊尚未公布"]}}]})
+            g,v,d = clear(user_game,user_version,None)
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{g}{v}版本活動資訊尚未公布"]}}]})
 
     # 使用者已進入副本攻略模式
     if mode == "dungeonguide":
@@ -276,13 +279,15 @@ def dialogflow_webhook():
                 else:
                     reply_lines.append(f"- 攻略：{url}")
             reply_text = "\n".join(reply_lines)
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game}《{user_dungeon}》副本攻略如下：\n{reply_text}"]}}]})
+            g,v,d = clear(user_game,None,user_dungeon)
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{g}{d}副本攻略如下：\n{reply_text}"]}}]})
         else:
             # 提示副本不存在或列出可查詢副本
             if user_game and user_game in dungeon_links:
                 available = "、".join(dungeon_links[user_game].keys())
                 return jsonify({"fulfillmentMessages": [{"text": {"text": [f"查無{user_dungeon}副本，{user_game}可查詢的副本有：{available}"]}}]})
             else:
+                g,v,d = clear(user_game,None,user_dungeon)
                 return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無該副本，請確認副本名稱或遊戲名稱"]}}]})
             
 
