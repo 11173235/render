@@ -56,6 +56,7 @@ CHARACTER_IMAGES = {
     "「席德」": "https://upload-os-bbs.hoyolab.com/upload/2025/09/02/370699309/29e9eb5ba9edeeaccb1fe88c943830bc_4293272389443311205.jpg",
     "「扳機」": "https://upload-os-bbs.hoyolab.com/upload/2025/03/31/370699309/e4288113f121760254acc55dec278244_7842277090726115056.png",}
 
+# 版本活動資訊
 ACTIVITY_DATA = {
     "原神": {
         "current": {"version": "月之三", "img": "https://fastcdn.hoyoverse.com/mi18n/hk4e_global/m20251110hy2ebg1fy8/upload/c5864ab82c466958c72ec56529a63ffe_5873909476729017748.jpg"},
@@ -77,6 +78,16 @@ ACTIVITY_DATA = {
             {"name": "先遣賞金-區域巡防", "time": "12/11 - 12/16"},
             {"name": "資料懸賞-實戰模擬", "time": "尚未公布"}]},
         "next": None}}
+
+# 遊戲副本攻略網址
+dungeon_links = {
+    "原神": {
+        "繁星秘境": "https://genshin-dungeon-link.com/starry",
+        "元素試煉": "https://genshin-dungeon-link.com/elemental"},
+    "崩鐵": {
+        "鋼鐵要塞": "https://honkai-dungeon-link.com/fortress"},
+    "絕區零": {
+        "零之深淵": "https://zero-dungeon-link.com/abyss"}}
 
 # 從 webhook 判斷角色名稱
 def match_character_from_webhook(body):
@@ -101,21 +112,52 @@ def get_character_list_text():
         start = end
     return "\n".join(text_list)
 
-#判斷遊戲名稱+獲取版本資料
+#判斷遊戲版本+獲取版本資料
 def find_game_and_version(game, version):
     # 如果使用者有輸入遊戲名稱 → 直接查指定遊戲，不會誤判
     if game:
-        for key in ["current", "next"]:
-            data = ACTIVITY_DATA.get(game, {}).get(key)
-            if data and version == data.get("version"):
-                return game, data
-        return None, None
+        if version:
+            for key in ["current", "next"]:
+                data = ACTIVITY_DATA.get(game, {}).get(key)
+                if data and version == data.get("version"):
+                    return game, data
+            return None, None
+        # 如果只有遊戲名稱，沒有指定版本
+        else:
+            current_data = ACTIVITY_DATA.get(game, {}).get("current")
+            next_data = ACTIVITY_DATA.get(game, {}).get("next")
+            if next_data is None:
+                return game, current_data
+            else:
+                # 同時存在 current 和 next，回傳 list
+                return game, [current_data.get("version"), next_data.get("version")]
     # ---- 沒有提供遊戲名稱時的 fallback ----
     for g, version_data in ACTIVITY_DATA.items():
         for key in ["current", "next"]:
             data = version_data.get(key)
             if data and version == data.get("version"):
                 return g, data
+    return None, None
+
+#判斷遊戲副本+獲取副本攻略連結
+def get_dungeon_link(game, dungeon):
+    # 有提供遊戲名稱
+    if game:
+        if dungeon:
+            if game in dungeon_links:
+                if dungeon in dungeon_links[game]:
+                    return game, dungeon_links[game][dungeon]
+            else:
+                # 遊戲不存在 → 回傳 None
+                return None, None
+        else:
+            # 沒有副本 → 回傳該遊戲所有副本名稱列表
+            if game in dungeon_links:
+                return game, list(dungeon_links[game].keys())
+    # 沒有提供遊戲名稱 → 搜尋副本在哪個遊戲裡
+    for g, dungeon_data in dungeon_links.items():
+        if dungeon in dungeon_data:
+            return g, dungeon_data[dungeon]
     return None, None
 
 # Dialogflow fulfillment webhook 主程式
@@ -132,9 +174,19 @@ def dialogflow_webhook():
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
         return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的角色名稱(僅支援近期可抽取角色)"]}}]})
+    # 版本活動資訊模式
+    if text == "版本活動資訊":
+        user_context[user_id] = "eventinformation"
+        return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲版本"]}}]})
+    # 副本攻略模式
+    if text == "副本攻略":
+        user_context[user_id] = "dungeonguide"
+        return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲副本"]}}]})
+
+    mode = user_context.get(user_id)
 
     # 使用者正在角色查詢模式
-    if user_context.get(user_id) == "characterguide":
+    if mode == "characterguide":
         character = match_character_from_webhook(body)
         if not character:
             return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此角色，請重新輸入角色名稱\n目前支援角色如下：\n" + get_character_list_text()]}}]})
@@ -144,37 +196,61 @@ def dialogflow_webhook():
             # 傳回文字+圖片
             return jsonify({
                 "fulfillmentMessages": [
-                    {"text": {"text": [f"{character} 的培養攻略："]}},
+                    {"text": {"text": [f"{character}的培養攻略："]}},
                     {"image": {"imageUri": img_url}}]})
-    
-    # 版本活動資訊模式
-    if text == "版本活動資訊":
-        user_context[user_id] = "eventinformation"
-        return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲版本"]}}]})
         
     # 使用者已進入版本活動資訊模式
-    if user_context.get(user_id) == "eventinformation":
+    if mode == "eventinformation":
         params = body["queryResult"].get("parameters", {})
         # 取得使用者輸入
-        user_version = str(params.get("version"))  # 版本號
         user_game = params.get("game")        # 遊戲（可能為 None）
+        user_version = str(params.get("gameversion"))  # 版本號
         
         # 查找遊戲版本
         user_game, data = find_game_and_version(user_game, user_version)
         if data is None:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無此版本資訊，請確認遊戲名稱或版本號是否正確。"]}}]})
+            return jsonify({
+                "fulfillmentMessages": [
+                    {"text": {"text": ["查無此版本資訊，請確認遊戲名稱或版本號是否正確。"]}}]})
+        if isinstance(data, list):
+            # data 是 list 表示同時有 current 和 next
+            current_ver = data[0]
+            next_ver = data[1]
+            return jsonify({
+                "fulfillmentMessages": [
+                    {"text": {"text": [f"請問要查詢{current_ver}還是{next_ver}的版本活動資訊？"]}}]})
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
             return jsonify({
                 "fulfillmentMessages": [
-                    {"text": {"text": [f"{user_game} {user_version} 版本活動資訊如下："]}},
+                    {"text": {"text": [f"{user_game}{user_version}版本活動資訊如下："]}},
                     {"image": {"imageUri": data["img"]}}]})
         elif user_game == "絕區零" and "events" in data:
             activity_text = "\n".join([f"{a['name']} ({a['time']})" for a in data["events"]])
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} {user_version} 版本活動資訊如下：\n{activity_text}"]}}]})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game}{user_version}版本活動資訊如下：\n{activity_text}"]}}]})
         else:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} {user_version} 版本活動資訊尚未公布"]}}]})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game}{user_version}版本活動資訊尚未公布"]}}]})
+
+        # 使用者已進入副本攻略模式
+        if mode == "dungeonguide":
+            params = body["queryResult"].get("parameters", {})
+            # 取得使用者輸入
+            user_game = params.get("game")       # 遊戲名稱，可為 None
+            user_dungeon = params.get("dungeon")  # 副本名稱，必填
+
+            #查找遊戲副本
+            user_game, data = get_dungeon_link(user_game, user_dungeon)
+            if data:
+                return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} 的 {user_dungeon} 副本攻略網址如下：{data}"]}}]})
+            else:
+                # 提示副本不存在或列出可查詢副本
+                if user_game and user_game in dungeon_links:
+                    available = "、".join(dungeon_links[user_game].keys())
+                    return jsonify({"fulfillmentMessages": [{"text": {"text": [f"查無{user_dungeon}副本，{user_game}可查詢的副本有：{available}"]}}]})
+                else:
+                    return jsonify({"fulfillmentMessages": [{"text": {"text": ["查無該副本，請確認副本名稱或遊戲名稱"]}}]})
+            
 
     # 預設回覆
     return jsonify({"fulfillmentMessages": [{"text": {"text": [f"收到：{text}"]}}]})
