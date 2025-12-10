@@ -133,11 +133,11 @@ def dialogflow_webhook():
         if not user_game:
             for game, versions in ACTIVITY_DATA.items():
                 # 判斷 current
-                if "current" in versions and user_version == versions["current"]["version"]:
+                if "current" in versions and user_version == versions["current"].get("version"):
                     user_game = game
                     break
                 # 判斷 next
-                if "next" in versions and user_version == versions["next"]["version"]:
+                elif "next" in versions and versions["next"] and user_version == versions["next"].get("version"):
                     user_game = game
                     break
         # 若找不到符合的遊戲
