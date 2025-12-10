@@ -118,6 +118,7 @@ def dialogflow_webhook():
     # 活動更新資訊模式
     if text == "活動更新資訊":
         user_context[user_id] = "eventupdates"
+        return jsonify({"fulfillmentText": "請輸入你想查詢的遊戲版本"})
         
     # 使用者已進入活動更新資訊模式
     if user_context.get(user_id) == "eventupdates":
