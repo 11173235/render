@@ -279,7 +279,19 @@ def dialogflow_webhook():
             
 
     # 預設回覆
-    return jsonify({"fulfillmentMessages": [{"text": {"text": [f"收到：{text}"]}}]})
+    last_mode = user_context.get(user_id)
+    if last_mode == "characterguide":
+        hint = "請輸入角色名稱查詢培養攻略。"
+    elif last_mode == "eventinformation":
+        hint = "請輸入遊戲名稱或版本號查詢活動資訊。"
+    elif last_mode == "dungeonguide":
+        hint = "請輸入遊戲副本名稱查詢攻略網址。"
+    else:
+        hint = "請點選功能選單開始查詢。"
+    
+    return jsonify({
+        "fulfillmentMessages": [
+            {"text": {"text": [f"抱歉，我不明白「{text}」的意思。\n{hint}"]}}]})
 
 # 啟動 server
 port = int(os.environ.get("PORT", 5000))
