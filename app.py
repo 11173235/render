@@ -117,11 +117,11 @@ def dialogflow_webhook():
     
     # 版本活動資訊模式
     if text == "版本活動資訊":
-        user_context[user_id] = "eventupdates"
+        user_context[user_id] = "eventinformation"
         return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲版本"]}}]})
         
     # 使用者已進入版本活動資訊模式
-    if user_context.get(user_id) == "eventupdates":
+    if user_context.get(user_id) == "eventinformation":
         params = body["queryResult"].get("parameters", {})
         # 取得使用者輸入
         user_version = params.get("version")  # 版本號
@@ -143,12 +143,12 @@ def dialogflow_webhook():
             return jsonify({"fulfillmentMessages": [{"text": {"text": [f"找不到 {user_version} 對應的遊戲"]}}]})
         
         # 判斷版本
-        if user_version == ACTIVITY_DATA[user_game]["current"]["version"]:
+        if user_version == ACTIVITY_DATA[user_game]["current"].get("version"):
             data = ACTIVITY_DATA[user_game]["current"]
-        elif user_version == ACTIVITY_DATA[user_game]["next"]["version"]:
+        elif user_version == ACTIVITY_DATA[user_game]["next"].get("version"):
             data = ACTIVITY_DATA[user_game]["next"]
         else:
-            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"{user_game} 沒有 {user_version} 版本活動資訊"]}}]})
+            return jsonify({"fulfillmentMessages": [{"text": {"text": [f"沒有{user_game}{user_version} 版本活動資訊"]}}]})
         
         # 判斷遊戲類型，回傳圖片或文字
         if user_game in ["原神", "崩壞：星穹鐵道"] and "img" in data:
