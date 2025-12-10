@@ -179,9 +179,9 @@ def clear(user_id,user_game,user_version,user_dungeon):
     game= user_game
     version= user_version
     dungeon= user_dungeon
-    user_context[user_id].pop("game", None)
-    user_context[user_id].pop("gameversion", None)
-    user_context[user_id].pop("dungeon", None)
+    user_game=None
+    user_version=None
+    user_dungeon=None
     return game,version,dungeon
 
 # Dialogflow fulfillment webhook 主程式
