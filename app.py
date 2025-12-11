@@ -206,7 +206,8 @@ def dialogflow_webhook():
         user_context[user_id] = "eventinformation"
         return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲版本"]}}]})
     # 副本攻略模式
-    if text == "副本攻略":
+    intent_name = body['queryResult']['intent']['displayName']
+    if intent_name == "DungeonGuide":
         user_context[user_id] = "dungeonguide"
         return jsonify({"fulfillmentMessages": [{"text": {"text": ["請輸入你想查詢的遊戲副本"]}}]})
 
