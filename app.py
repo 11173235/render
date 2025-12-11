@@ -194,9 +194,6 @@ def dialogflow_webhook():
     session = body.get("session", "")
     user_id = session.split("/")[-1]
 
-    print("queryText:", text)
-    print("intent:", body['queryResult'].get('intent', {}))
-
     # 進入角色攻略模式
     if text == "角色培養攻略":
         user_context[user_id] = "characterguide"
