@@ -230,8 +230,11 @@ def dialogflow_webhook():
     if mode == "eventinformation":
         params = body["queryResult"].get("parameters", {})
         # 取得使用者輸入
-        user_game = params.get("game")[0]        # 遊戲
-        print("user_game")
+        game_param = params.get("game")        # 遊戲
+        if isinstance(game_param, list):
+            user_game = game_param[0] if game_param else None
+        else:
+            user_game = game_param
         user_version = str(params.get("gameversion"))  # 版本號
         
         # 查找遊戲版本
