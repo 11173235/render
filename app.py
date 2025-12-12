@@ -144,7 +144,7 @@ def dialogflow_webhook():
         user_version = str(params.get("gameversion"))    # 版本號
         # 補參數
         if user_game:
-            game_data = activity_data[user_game]
+            game_data = activity_data[user_game][0]
             if not user_version:
                 if "next" in game_data:
                     user_version = list(game_data.keys())[0]  #str
