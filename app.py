@@ -153,7 +153,7 @@ def dialogflow_webhook():
         else:
             if user_version:
                 for game in activity_data.keys():
-                    game_data = activity_data[user_game]
+                    game_data = activity_data[game]
                     if user_version in game_data.keys():
                         user_game=game
                         break
