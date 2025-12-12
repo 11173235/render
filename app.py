@@ -308,7 +308,3 @@ def dialogflow_webhook():
         hint = "請點選功能選單開始查詢。"
     
     return jsonify({"fulfillmentMessages": [{"text": {"text": [f"抱歉，我不明白「{text}」的意思。\n{hint}"]}}]})
-
-# 啟動 server
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
